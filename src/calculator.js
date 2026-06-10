@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Supported operations: addition, subtraction, multiplication, division
+// Supported operations: addition, subtraction, multiplication, division, modulo, exponentiation, square root
 
 const readline = require('readline');
 
@@ -23,6 +23,24 @@ function divide(a, b) {
   return a / b;
 }
 
+function modulo(a, b) {
+  if (b === 0) {
+    throw new Error('Cannot modulo by zero');
+  }
+  return a % b;
+}
+
+function power(base, exponent) {
+  return Math.pow(base, exponent);
+}
+
+function squareRoot(n) {
+  if (n < 0) {
+    throw new Error('Cannot take square root of a negative number');
+  }
+  return Math.sqrt(n);
+}
+
 function formatResult(operation, a, b, result) {
   return `Result (${operation}): ${a} ${operation} ${b} = ${result}`;
 }
@@ -33,13 +51,24 @@ function parseExpression(input) {
     '-': 'subtraction',
     '*': 'multiplication',
     'x': 'multiplication',
-    '/': 'division'
+    '/': 'division',
+    '%': 'modulo',
+    '^': 'power',
+    '**': 'power'
   };
 
   const tokens = input.trim().split(/\s+/);
 
+  if (tokens.length === 2 && ['sqrt', '√'].includes(tokens[0].toLowerCase())) {
+    const value = Number(tokens[1]);
+    if (Number.isNaN(value)) {
+      throw new Error('The operand must be a valid number');
+    }
+    return { a: value, b: null, operator: tokens[0], opName: 'squareRoot' };
+  }
+
   if (tokens.length !== 3) {
-    throw new Error('Please enter an expression in the form: number operator number');
+    throw new Error('Please enter an expression in the form: number operator number or use "sqrt <number>"');
   }
 
   const [left, operator, right] = tokens;
@@ -52,7 +81,7 @@ function parseExpression(input) {
 
   const opName = operatorMap[operator];
   if (!opName) {
-    throw new Error('Unsupported operator. Use +, -, *, or /');
+    throw new Error('Unsupported operator. Use +, -, *, /, %, ^, or ** for power');
   }
 
   return { a, b, operator, opName };
@@ -68,6 +97,12 @@ function calculate(a, b, opName) {
       return multiply(a, b);
     case 'division':
       return divide(a, b);
+    case 'modulo':
+      return modulo(a, b);
+    case 'power':
+      return power(a, b);
+    case 'squareRoot':
+      return squareRoot(a);
     default:
       throw new Error('Unsupported operation');
   }
@@ -75,10 +110,13 @@ function calculate(a, b, opName) {
 
 function showUsage() {
   console.log('Node.js CLI Calculator');
-  console.log('Supported operations: addition (+), subtraction (-), multiplication (*), division (/)');
+  console.log('Supported operations: addition (+), subtraction (-), multiplication (*), division (/), modulo (%), exponentiation (^ or **), square root (sqrt <number>)');
   console.log('Examples:');
   console.log('  node src/calculator.js 5 + 3');
   console.log('  node src/calculator.js 10 / 2');
+  console.log('  node src/calculator.js 10 % 3');
+  console.log('  node src/calculator.js 2 ^ 8');
+  console.log('  node src/calculator.js sqrt 9');
   console.log('Or enter expressions interactively after running the script without arguments.');
 }
 
@@ -93,8 +131,8 @@ function main() {
     });
 
     console.log('Node.js CLI Calculator');
-    console.log('Enter expressions like: 2 + 3');
-    console.log('Supported operators: +, -, *, /');
+    console.log('Enter expressions like: 2 + 3 or sqrt 9');
+    console.log('Supported operators: +, -, *, /, %, ^, **, sqrt');
     console.log('Type "exit" or "quit" to leave.');
     rl.prompt();
 
@@ -140,4 +178,18 @@ function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  add,
+  subtract,
+  multiply,
+  divide,
+  modulo,
+  power,
+  squareRoot,
+  parseExpression,
+  calculate
+};
